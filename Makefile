@@ -21,9 +21,6 @@ DOCS_DIR 	= $(ROOT)/docs
 DOXYFILE_IN 	= $(DOCS_DIR)/Doxyfile.in
 DOXYFILE 	= $(DOCS_DIR)/Doxyfile
 
-
-LOGFILE	:= logfile.txt
-
 # .c files for source code
 SRC_FILES_NAMES = file.c
 
@@ -74,12 +71,23 @@ $(NAME) : $(OBJ_FILES)
 	@$(AR) $(NAME) $(OBJ_FILES)
 	@$(ECHO) "$(GREEN)[AR ] library built successfully.$(NC)"
 
+
+# helper for generating compile_commands.json
+ifdef COMPILECOMMANDS
+	MAKE = compiledb make
+endif
+
 $(TEST_DIR)/libminicode-test: $(NAME)
 	@$(MAKE) -C $(TEST_DIR) \
 		LCFLAGS=" -I$(INC_DIR)" \
 		LFLAGS+=" $(ROOT)/$(NAME)" \
-		re
+		all
 	@mv $(TEST_DIR)/libminicode-test $(ROOT)/
+ifdef COMPILECOMMANDS
+	@mv compile_commands.json $(TEST_DIR)
+endif
+
+
 
 tests: $(NAME) $(TEST_DIR)/libminicode-test
 
@@ -116,7 +124,7 @@ fclean :
 	@$(RM_RF) $(DOXYFILE)
 	@$(ECHO) "$(GREEN)[CLN] Documentation clean complete.$(NC)"
 	@$(ECHO) "$(BROWN)[CLN] Cleaning object, dependency files, and library...$(NC)"
-	@$(RM_RF) $(BUILD_DIR) $(NAME)
+	@$(RM_RF) $(BUILD_DIR) $(NAME) libminicode-test
 	@$(ECHO) "$(GREEN)[CLN] Clean complete.$(NC)"
 
 .DEFAULT_GOAL := all
