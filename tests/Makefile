@@ -27,20 +27,20 @@ LCFLAGS ?=
 LFLAGS 	= 
 MKDIR 	:= mkdir -p
 RM_RF 	:= rm -rf
-ECHO  	:= echo -e
+ECHO   := printf '%b\n'
 
-BLUE	:= $(shell echo -e "\033[34m") 
-BROWN	:= $(shell echo -e "\033[33m")
-GREEN	:= $(shell echo -e "\033[32m")
-RED	:= $(shell echo -e "\033[31m")
-NC	:= $(shell echo -e "\033[0m")
+BLUE	:= \033[34m
+BROWN	:= \033[33m
+GREEN	:= \033[32m
+RED	:= \033[31m
+NC	:= \033[0m
 
 #<><><><><><><> Recipes <><><><><><><><><><><><><><><><><><>
 
 # Modifying Implicit conversion rules to build in custom directory
 $(BUILD_DIR)%.o : $(SRC_DIR)%.c
 	@$(MKDIR) $(dir $@)
-	@$(ECHO) "\033[34m[CMP] Compiling \b$(subst $(ROOT)/, ,$<)...$(NC)"
+	@$(ECHO) "$(BLUE)[CMP] Compiling \b$(subst $(ROOT)/, ,$<)...$(NC)"
 	@$(CC) -c $(CFLAGS) $(LCFLAGS) $< -o $@ 
 
 
@@ -65,6 +65,7 @@ fclean :
 	@$(ECHO) "$(BROWN)[CLN] Cleaning object, dependency files, and executable...$(NC)"
 	@$(RM_RF) $(BUILD_DIR) $(NAME)
 	@$(ECHO) "$(GREEN)[CLN] Clean complete.$(NC)"
+	@$(ECHO) # for newline
 
 .DEFAULT_GOAL := all
 .PHONY : all clean fclean re docs

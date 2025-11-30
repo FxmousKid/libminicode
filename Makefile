@@ -14,7 +14,7 @@ ROOT		= $(abspath $(CURDIR))
 
 SRC_DIR 	= $(ROOT)/src/
 BUILD_DIR 	= $(ROOT)/build/
-INC_DIR 	= $(ROOT)/includes/
+INC_DIR 	= $(ROOT)/include/
 TEST_DIR	= $(ROOT)/tests/
 DOCS_DIR 	= $(ROOT)/docs
 
@@ -41,23 +41,23 @@ CC 	:= cc
 CFLAGS 	:= -gdwarf-4 -Wall -Wextra -Werror -I $(INC_DIR) -MMD -MP -DLOGFILE_NAME=\"$(LOGFILE)\"
 MKDIR 	:= mkdir -p
 RM_RF 	:= rm -rf
-ECHO  	:= echo -e
 OPEN	:= $(shell command -v open 2> /dev/null) 
+ECHO	:= printf '%b\n'
 
 PROJECT_VERSION := $(shell git describe --tags --always)
 
-BLUE	:= $(shell echo -e "\033[34m") 
-BROWN	:= $(shell echo -e "\033[33m")
-GREEN	:= $(shell echo -e "\033[32m")
-RED	:= $(shell echo -e "\033[31m")
-NC	:= $(shell echo -e "\033[0m")
+BLUE	:= \033[34m
+BROWN	:= \033[33m
+GREEN	:= \033[32m
+RED	:= \033[31m
+NC	:= \033[0m
 
 #<><><><><><><> Recipes <><><><><><><><><><><><><><><><><><>
 
 # Modifying Implicit conversion rules to build in custom directory
 $(BUILD_DIR)%.o : $(SRC_DIR)%.c
 	@$(MKDIR) $(dir $@)
-	@$(ECHO) "\033[34m[CMP] Compiling \b$(subst $(ROOT)/, ,$<)...$(NC)"
+	@$(ECHO) "$(BLUE)[CMP] Compiling \b$(subst $(ROOT)/, ,$<)...$(NC)"
 	@$(CC) -c $(CFLAGS) $< -o $@ 
 
 
@@ -72,20 +72,28 @@ $(NAME) : $(OBJ_FILES)
 	@$(ECHO) "$(GREEN)[AR ] library built successfully.$(NC)"
 
 
-# helper for generating compile_commands.json
-ifdef COMPILECOMMANDS
-	MAKE = compiledb make
+TEST_ALLOWED_GOALS := all re
+TEST_SUBTARGET := $(firstword $(filter $(TEST_ALLOWED_GOALS),$(MAKECMDGOALS)))
+ifeq ($(TEST_SUBTARGET),)
+TEST_SUBTARGET := all
 endif
 
 $(TEST_DIR)/libminicode-test: $(NAME)
-	@$(MAKE) -C $(TEST_DIR) \
-		LCFLAGS=" -I$(INC_DIR)" \
-		LFLAGS+=" $(ROOT)/$(NAME)" \
-		all
-	@mv $(TEST_DIR)/libminicode-test $(ROOT)/
-ifdef COMPILECOMMANDS
-	@mv compile_commands.json $(TEST_DIR)
-endif
+	@if [ -n "$(COMPILECOMMANDS)" ]; then \
+		compiledb make -C $(TEST_DIR) \
+			LCFLAGS=" -I$(INC_DIR)" \
+			LFLAGS+=" $(ROOT)/$(NAME)" \
+			$(TEST_SUBTARGET); \
+		mv $(TEST_DIR)/libminicode-test $(ROOT)/; \
+		mv compile_commands.json $(TEST_DIR); \
+		compiledb make re; \
+	else \
+		$(MAKE) -C $(TEST_DIR) \
+			LCFLAGS=" -I$(INC_DIR)" \
+			LFLAGS+=" $(ROOT)/$(NAME)" \
+			$(TEST_SUBTARGET); \
+		mv $(TEST_DIR)/libminicode-test $(ROOT)/; \
+	fi
 
 
 
@@ -102,7 +110,6 @@ docs:
 	@rm -rf $(DOCS_DIR)/html/ $(DOCS_DIR)/latex/
 	@mv html latex $(DOCS_DIR)/
 	@$(ECHO) "$(GREEN)[DOC] Documentation generated successfully.$(NC)"
-
 ifndef OPEN
 	$(shell xdg-open $(DOCS_DIR)/html/index.html > /dev/null 2>&1 || true)
 else
@@ -126,6 +133,7 @@ fclean :
 	@$(ECHO) "$(BROWN)[CLN] Cleaning object, dependency files, and library...$(NC)"
 	@$(RM_RF) $(BUILD_DIR) $(NAME) libminicode-test
 	@$(ECHO) "$(GREEN)[CLN] Clean complete.$(NC)"
+	@$(ECHO) # for newline
 
 .DEFAULT_GOAL := all
 .PHONY : all clean fclean re docs
