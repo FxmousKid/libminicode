@@ -80,7 +80,7 @@ endif
 
 $(TEST_DIR)/libminicode-test: $(NAME)
 	@if [ -n "$(COMPILECOMMANDS)" ]; then \
-		compiledb make -C $(TEST_DIR) \
+		compiledb make --no-print-directory -C $(TEST_DIR) \
 			LCFLAGS=" -I$(INC_DIR)" \
 			LFLAGS+=" $(ROOT)/$(NAME)" \
 			$(TEST_SUBTARGET); \
@@ -88,7 +88,7 @@ $(TEST_DIR)/libminicode-test: $(NAME)
 		mv compile_commands.json $(TEST_DIR); \
 		compiledb make re; \
 	else \
-		$(MAKE) -C $(TEST_DIR) \
+		$(MAKE) --no-print-directory -C $(TEST_DIR) \
 			LCFLAGS=" -I$(INC_DIR)" \
 			LFLAGS+=" $(ROOT)/$(NAME)" \
 			$(TEST_SUBTARGET); \
